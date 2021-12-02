@@ -11,18 +11,26 @@ function App() {
 	useEffect(
 		() => {
 			socketRef.current = io.connect('http://localhost:4000');
+			socketRef.current.on('connection', () => {
+				console.log('connection');
+				socketRef.current.emit('room_join', state.room)
+			})
 			socketRef.current.on('message', ({ name, message }) => {
 				setChat([ ...chat, { name, message } ]);
 			});
 			socketRef.current.on('user_join', function(data) {
 				console.log(data);
-				setChat([ ...chat, { name: 'ChatBot', message: `${data.username} has joined the chat` } ]);
+				setChat([ ...chat, { name: 'ChatBot', message: `${data} has joined the chat` } ]);
 			});
+			socketRef.current.onAny((eventName, ...args) => {
+				console.log(eventName,args);
+			})
 			// socketRef.current.on('user_leave', function(data) {
 			// 	console.log('data', data);
 			// 	//setChat([ ...chat, { name: 'ChatBot', message: data } ]);
 			// });
 			return () => {
+				console.log('useEffect');
 				socketRef.current.disconnect();
 			};
 		},
@@ -33,11 +41,11 @@ function App() {
 	};
 
 	const onMessageSubmit = (e) => {
+		e.preventDefault();
 		let msgEle = document.getElementById('message');
 		console.log([ msgEle.name ], msgEle.value);
 		setState({ ...state, [msgEle.name]: msgEle.value });
 		socketRef.current.emit('message', { name: state.name, message: msgEle.value, room: state.room });
-		e.preventDefault();
 		setState({ message: '', name: state.name, room: state.room });
 		msgEle.value = '';
 		msgEle.focus();

@@ -21,15 +21,27 @@ io.on('connection', (socket) => {
 		socket.to(room).emit('user_join', name);
 	});
 
+	socket.on('room_join', (room) => {
+		socket.join(room);
+	})
+
 	socket.on('message', ({ name, message, room }) => {
 		console.log(name, message);
-		io.to(room).emit('message', { name, message });
+		io.in(room).emit('message', { name, message });
 	});
 
 	socket.on('disconnect', () => {
 		console.log('Disconnect Fired');
 		//socket.broadcast.emit('user_leave', `${this.username} has left`);
 	});
+});
+
+io.of("/").adapter.on("create-room", (room) => {
+	console.log(`room ${room} was created`);
+});
+
+io.of("/").adapter.on("join-room", (room, id) => {
+	console.log(`socket ${id} has joined room ${room}`);
 });
 
 http.listen(4000, () => {
